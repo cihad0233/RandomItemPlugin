@@ -1,0 +1,35 @@
+name: Build plugin jar
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 8 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: BuildTools ile Spigot 1.8.8 API'sini local Maven deposuna kur
+        run: |
+          mkdir -p /tmp/buildtools
+          cd /tmp/buildtools
+          curl -o BuildTools.jar https://hub.spigotmc.org/jenkins/job/BuildTools/lastStableBuild/artifact/target/BuildTools.jar
+          git config --global user.email "ci@example.com"
+          git config --global user.name "CI"
+          java -jar BuildTools.jar --rev 1.8.8 --remapped
+
+      - name: Plugin'i derle
+        run: mvn -B clean package
+
+      - name: Jar dosyasını yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: RandomItemPlugin-jar
+          path: target/RandomItemPlugin.jar
