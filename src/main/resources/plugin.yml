@@ -1,0 +1,15 @@
+name: RandomItemPlugin
+version: 1.0.0
+main: com.oyun.randomitem.RandomItemPlugin
+author: Claude
+
+commands:
+  randomitem:
+    aliases: [ri, ritem]
+    description: Random Item oyun komutlari
+    usage: /ri yardim
+
+permissions:
+  randomitem.admin:
+    description: Harita olusturma / duzenleme izni
+    default: op
