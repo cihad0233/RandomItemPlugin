@@ -22,7 +22,7 @@ public class RandomItemTask extends BukkitRunnable {
             Material.GOLDEN_APPLE, Material.APPLE, Material.COOKED_BEEF, Material.ENDER_PEARL,
             Material.POTION, Material.TNT, Material.FLINT_AND_STEEL,
             Material.WATER_BUCKET, Material.LAVA_BUCKET, Material.IRON_INGOT,
-            Material.COBWEB, Material.FISHING_ROD
+            Material.WEB, Material.FISHING_ROD
     };
 
     private final RandomItemPlugin plugin;
@@ -51,7 +51,7 @@ public class RandomItemTask extends BukkitRunnable {
     private ItemStack randomItem() {
         Material mat = ITEM_POOL[random.nextInt(ITEM_POOL.length)];
         int amount = 1;
-        if (mat == Material.ARROW || mat == Material.COBWEB) {
+        if (mat == Material.ARROW || mat == Material.WEB) {
             amount = 1 + random.nextInt(4);
         }
         return new ItemStack(mat, amount);
