@@ -13,12 +13,26 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class RandomItemCommand implements CommandExecutor {
 
     private final RandomItemPlugin plugin;
 
+    // Her yetkilinin uzerinde calistigi "secili harita" - /ri create ile otomatik,
+    // /ri select ile elle secilir. Boylece setspawn/setnpc'de her seferinde
+    // harita ismini tekrar yazmaya gerek kalmaz.
+    private final Map<UUID, String> selectedArena = new HashMap<>();
+    private static final UUID CONSOLE_KEY = new UUID(0, 0);
+
     public RandomItemCommand(RandomItemPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    private UUID keyFor(CommandSender sender) {
+        return (sender instanceof Player) ? ((Player) sender).getUniqueId() : CONSOLE_KEY;
     }
 
     @Override
@@ -35,6 +49,8 @@ public class RandomItemCommand implements CommandExecutor {
                 return handleCreate(sender, args);
             case "delete":
                 return handleDelete(sender, args);
+            case "select":
+                return handleSelect(sender, args);
             case "setspawn":
                 return handleSetSpawn(sender, args);
             case "setnpc":
@@ -63,7 +79,22 @@ public class RandomItemCommand implements CommandExecutor {
             return true;
         }
         plugin.getArenaManager().create(name);
-        sender.sendMessage(ok("'" + name + "' haritasi olusturuldu. Simdi /ri setspawn ile 5 dogma noktasi belirle."));
+        selectedArena.put(keyFor(sender), name);
+        sender.sendMessage(ok("'" + name + "' haritasi olusturuldu ve secili harita yapildi."));
+        sender.sendMessage(ChatColor.GRAY + "Simdi her dogma noktasina gidip " + ChatColor.YELLOW
+                + "/ri setspawn <1-5>" + ChatColor.GRAY + " yaz (harita ismini tekrar yazmana gerek yok).");
+        return true;
+    }
+
+    private boolean handleSelect(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
+        if (args.length < 2) { sender.sendMessage(err("Kullanim: /ri select <isim>")); return true; }
+
+        Arena arena = plugin.getArenaManager().get(args[1]);
+        if (arena == null) { sender.sendMessage(err("Harita bulunamadi.")); return true; }
+
+        selectedArena.put(keyFor(sender), arena.getName());
+        sender.sendMessage(ok("'" + arena.getName() + "' artik secili harita. setspawn/setnpc komutlarinda ismi tekrar yazmana gerek yok."));
         return true;
     }
 
@@ -83,14 +114,35 @@ public class RandomItemCommand implements CommandExecutor {
     private boolean handleSetSpawn(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) { sender.sendMessage(err("Bu komut sadece oyun icinde kullanilabilir.")); return true; }
         if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
-        if (args.length < 3) { sender.sendMessage(err("Kullanim: /ri setspawn <isim> <1-5>")); return true; }
+        if (args.length < 2) {
+            sender.sendMessage(err("Kullanim: /ri setspawn <1-5>  (once /ri create veya /ri select ile bir harita sec)"));
+            sender.sendMessage(err("ya da:    /ri setspawn <isim> <1-5>"));
+            return true;
+        }
 
-        Arena arena = plugin.getArenaManager().get(args[1]);
-        if (arena == null) { sender.sendMessage(err("Harita bulunamadi.")); return true; }
+        Arena arena;
+        String indexArg;
+
+        if (args.length >= 3) {
+            // /ri setspawn <isim> <1-5> - eski/acik format
+            arena = plugin.getArenaManager().get(args[1]);
+            if (arena == null) { sender.sendMessage(err("Harita bulunamadi: " + args[1])); return true; }
+            indexArg = args[2];
+            selectedArena.put(keyFor(sender), arena.getName());
+        } else {
+            // /ri setspawn <1-5> - secili haritayi kullan
+            String selected = selectedArena.get(keyFor(sender));
+            if (selected == null || plugin.getArenaManager().get(selected) == null) {
+                sender.sendMessage(err("Secili bir haritan yok. Once /ri create <isim> veya /ri select <isim> kullan."));
+                return true;
+            }
+            arena = plugin.getArenaManager().get(selected);
+            indexArg = args[1];
+        }
 
         int index;
         try {
-            index = Integer.parseInt(args[2]);
+            index = Integer.parseInt(indexArg);
         } catch (NumberFormatException ex) {
             sender.sendMessage(err("Dogma noktasi numarasi 1 ile 5 arasinda bir sayi olmali."));
             return true;
@@ -103,17 +155,41 @@ public class RandomItemCommand implements CommandExecutor {
         Player p = (Player) sender;
         arena.setSpawnPoint(index, p.getLocation());
         plugin.getArenaManager().save();
-        sender.sendMessage(ok(index + ". oyuncu dogma noktasi ayarlandi. (" + arena.getName() + ")"));
+
+        int doluSayisi = 0;
+        for (int i = 1; i <= 5; i++) if (arena.getSpawnPoints()[i - 1] != null) doluSayisi++;
+
+        sender.sendMessage(ok(index + ". dogma noktasi ayarlandi. (" + arena.getName() + ") - "
+                + doluSayisi + "/5 tamamlandi"));
+
+        if (arena.hasAllSpawns()) {
+            sender.sendMessage(ChatColor.GOLD + "Tum dogma noktalari tamam! Simdi /ri setnpc " + arena.getName() + " ile menu NPC'sini koyabilirsin.");
+        }
         return true;
     }
 
     private boolean handleSetNpc(CommandSender sender, String[] args) {
         if (!(sender instanceof Player)) { sender.sendMessage(err("Bu komut sadece oyun icinde kullanilabilir.")); return true; }
         if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
-        if (args.length < 2) { sender.sendMessage(err("Kullanim: /ri setnpc <isim>")); return true; }
 
-        Arena arena = plugin.getArenaManager().get(args[1]);
-        if (arena == null) { sender.sendMessage(err("Harita bulunamadi.")); return true; }
+        Arena arena;
+        if (args.length >= 2) {
+            arena = plugin.getArenaManager().get(args[1]);
+            if (arena == null) { sender.sendMessage(err("Harita bulunamadi: " + args[1])); return true; }
+            selectedArena.put(keyFor(sender), arena.getName());
+        } else {
+            String selected = selectedArena.get(keyFor(sender));
+            if (selected == null || plugin.getArenaManager().get(selected) == null) {
+                sender.sendMessage(err("Secili bir haritan yok. Kullanim: /ri setnpc <isim>  ya da once /ri select <isim> yap."));
+                return true;
+            }
+            arena = plugin.getArenaManager().get(selected);
+        }
+
+        if (!arena.hasAllSpawns()) {
+            sender.sendMessage(ChatColor.YELLOW + "Uyari: '" + arena.getName() + "' haritasinin dogma noktalari henuz tamam degil. "
+                    + "Harita menude hazir olmayacak sekilde gorunecek, oyuncular giremeyecek.");
+        }
 
         Player p = (Player) sender;
         Location loc = p.getLocation();
@@ -160,6 +236,16 @@ public class RandomItemCommand implements CommandExecutor {
         Arena arena = plugin.getArenaManager().get(args[1]);
         if (arena == null) { sender.sendMessage(err("Harita bulunamadi.")); return true; }
 
+        if (!arena.hasAllSpawns()) {
+            sender.sendMessage(err("Bu haritanin 5 dogma noktasi da ayarlanmamis, oyun baslatilamaz."));
+            sender.sendMessage(err("Once /ri select " + arena.getName() + " ve /ri setspawn <1-5> ile tamamla."));
+            return true;
+        }
+        if (arena.getPlayers().isEmpty()) {
+            sender.sendMessage(err("Haritada hic oyuncu yok, baslatmanin anlami yok."));
+            return true;
+        }
+
         plugin.getGameController().start(arena);
         sender.sendMessage(ok("Oyun zorla baslatildi."));
         return true;
@@ -182,9 +268,11 @@ public class RandomItemCommand implements CommandExecutor {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "--- RandomItem Komutlari ---");
-        sender.sendMessage(ChatColor.YELLOW + "/ri create <isim>" + ChatColor.GRAY + " - yeni harita olustur");
+        sender.sendMessage(ChatColor.YELLOW + "/ri create <isim>" + ChatColor.GRAY + " - yeni harita olustur (otomatik secer)");
+        sender.sendMessage(ChatColor.YELLOW + "/ri select <isim>" + ChatColor.GRAY + " - bir haritayi 'secili' yap");
         sender.sendMessage(ChatColor.YELLOW + "/ri delete <isim>" + ChatColor.GRAY + " - harita sil");
-        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <isim> <1-5>" + ChatColor.GRAY + " - dogma noktasi ayarla");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <1-5>" + ChatColor.GRAY + " - secili haritaya dogma noktasi ekle");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <isim> <1-5>" + ChatColor.GRAY + " - belirli haritaya dogma noktasi ekle");
         sender.sendMessage(ChatColor.YELLOW + "/ri setnpc <isim>" + ChatColor.GRAY + " - menu npc'si olustur");
         sender.sendMessage(ChatColor.YELLOW + "/ri list" + ChatColor.GRAY + " - haritalari listele");
         sender.sendMessage(ChatColor.YELLOW + "/ri menu" + ChatColor.GRAY + " - harita menusunu ac");
