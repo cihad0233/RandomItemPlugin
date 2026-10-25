@@ -4,6 +4,7 @@ import com.oyun.randomitem.arena.ArenaManager;
 import com.oyun.randomitem.arena.GameController;
 import com.oyun.randomitem.commands.RandomItemCommand;
 import com.oyun.randomitem.config.Settings;
+import com.oyun.randomitem.listeners.BlockTrackingListener;
 import com.oyun.randomitem.listeners.MenuListener;
 import com.oyun.randomitem.listeners.NPCListener;
 import com.oyun.randomitem.listeners.PlayerListener;
@@ -31,6 +32,7 @@ public class RandomItemPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new NPCListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        getServer().getPluginManager().registerEvents(new BlockTrackingListener(this), this);
 
         // Oyundaki oyunculara periyodik olarak rastgele esya dagitan gorev (periyot config.yml'den okunur)
         new RandomItemTask(this).runTaskTimer(this, 100L, settings.getItemIntervalTicks());

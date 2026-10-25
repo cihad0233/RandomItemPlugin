@@ -35,7 +35,7 @@ public class PlayerListener implements Listener {
         e.setDeathMessage(null);
         e.getDrops().clear();
 
-        plugin.getGameController().onPlayerDeath(p, arena);
+        plugin.getGameController().eliminatePlayer(p, arena);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             p.spigot().respawn();
@@ -44,6 +44,10 @@ public class PlayerListener implements Listener {
             Location specLoc = plugin.getSettings().getSpectatorLocation();
             if (specLoc == null) specLoc = plugin.getSettings().getLobbyLocation();
             if (specLoc != null) p.teleport(specLoc);
+
+            // Kazanan kontrolu simdi (izleyici atamasindan SONRA) yapiliyor, boylece
+            // oyun bu kisinin olumuyle bitiyorsa endGame() onu dogru sekilde lobiye tasir.
+            plugin.getGameController().checkWinner(arena);
         });
     }
 

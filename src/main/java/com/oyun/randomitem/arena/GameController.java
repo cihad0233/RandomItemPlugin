@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -46,7 +47,7 @@ public class GameController {
         p.setHealth(20.0);
         p.setFoodLevel(20);
 
-        broadcast(arena, ChatColor.YELLOW + p.getName() + ChatColor.GRAY + " oyuna katildi. ("
+        broadcast(arena, ChatColor.YELLOW + p.getDisplayName() + ChatColor.GRAY + " oyuna katildi. ("
                 + arena.getPlayers().size() + "/" + arena.getMaxPlayers() + ")");
 
         if (arena.isFull()) {
@@ -57,7 +58,13 @@ public class GameController {
     public void leave(Player p, Arena arena) {
         arena.removePlayer(p);
         p.setGameMode(GameMode.SURVIVAL);
-        broadcast(arena, ChatColor.YELLOW + p.getName() + ChatColor.GRAY + " oyundan ayrildi.");
+
+        Location lobby = plugin.getSettings().getLobbyLocation();
+        if (lobby != null) {
+            p.teleport(lobby);
+        }
+
+        broadcast(arena, ChatColor.YELLOW + p.getDisplayName() + ChatColor.GRAY + " oyundan ayrildi.");
         if (arena.getState() == ArenaState.OYUNDA) {
             checkWinner(arena);
         }
@@ -88,20 +95,23 @@ public class GameController {
         broadcast(arena, ChatColor.GOLD + "Oyun basladi! Rastgele esyalar dagitilacak, son hayatta kalan kazanir!");
     }
 
-    public void onPlayerDeath(Player p, Arena arena) {
+    // Sadece elenme kaydini tutar, kazanan kontrolunu yapmaz - bu PlayerListener
+    // tarafindan oyuncu izleyici moduna/konumuna atandiktan SONRA (bir sonraki tick'te)
+    // cagrilir. Boylece endGame() o oyuncuyu izleyici atamasindan sonra lobiye tasiyabilir.
+    public void eliminatePlayer(Player p, Arena arena) {
         arena.getAlivePlayers().remove(p.getUniqueId());
-        broadcast(arena, ChatColor.RED + p.getName() + " elendi! (" + arena.getAlivePlayers().size() + " oyuncu kaldi)");
-        checkWinner(arena);
+        broadcast(arena, ChatColor.RED + p.getDisplayName() + ChatColor.RED + " elendi! ("
+                + arena.getAlivePlayers().size() + " oyuncu kaldi)");
     }
 
-    private void checkWinner(Arena arena) {
+    public void checkWinner(Arena arena) {
         if (arena.getState() != ArenaState.OYUNDA) return;
         if (arena.getAlivePlayers().size() <= 1) {
             String winnerName = "Kimse";
             if (arena.getAlivePlayers().size() == 1) {
                 UUID winnerId = arena.getAlivePlayers().iterator().next();
                 Player winner = Bukkit.getPlayer(winnerId);
-                if (winner != null) winnerName = winner.getName();
+                if (winner != null) winnerName = winner.getDisplayName();
             }
             broadcast(arena, ChatColor.GOLD + "Oyun bitti! Kazanan: " + winnerName);
             endGame(arena);
@@ -121,6 +131,15 @@ public class GameController {
                 p.setGameMode(GameMode.SURVIVAL); // izleyici modundaysa da buradan cikarir
             }
         }
+
+        // Oyun sirasinda koyulan tum bloklari temizle (haritayi bir sonraki mac icin sifirlar)
+        for (Location loc : arena.getPlacedBlocks()) {
+            if (loc.getWorld() != null) {
+                loc.getBlock().setType(Material.AIR);
+            }
+        }
+        arena.getPlacedBlocks().clear();
+
         arena.reset();
     }
 

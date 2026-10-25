@@ -21,6 +21,9 @@ public class Arena {
     private final LinkedHashSet<UUID> players = new LinkedHashSet<>();
     private final Set<UUID> alivePlayers = new HashSet<>();
 
+    // Oyun sirasinda oyuncularin koydugu bloklarin konumlari - oyun bitince temizlenir
+    private final Set<Location> placedBlocks = new HashSet<>();
+
     public Arena(String name, int maxPlayers) {
         this.name = name;
         this.maxPlayers = Math.max(2, maxPlayers);
@@ -88,6 +91,8 @@ public class Arena {
         }
         return -1;
     }
+
+    public Set<Location> getPlacedBlocks() { return placedBlocks; }
 
     public void reset() {
         players.clear();

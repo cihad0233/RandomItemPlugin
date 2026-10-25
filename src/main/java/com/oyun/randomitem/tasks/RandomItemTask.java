@@ -45,21 +45,9 @@ public class RandomItemTask extends BukkitRunnable {
                 if (p == null) continue;
 
                 Material mat = pool.get(random.nextInt(pool.size()));
-                int amount = determineAmount(mat, placeable);
-
-                p.getInventory().addItem(new ItemStack(mat, amount));
+                p.getInventory().addItem(new ItemStack(mat, 1)); // her zaman 1 adet
                 // Bilerek chat mesaji yok - esya sessizce envantere ekleniyor.
             }
         }
-    }
-
-    private int determineAmount(Material mat, List<Material> placeable) {
-        if (placeable.contains(mat)) {
-            return 2 + random.nextInt(7); // 2-8 arasi, bir seyler insa edilebilsin diye
-        }
-        if (mat == Material.ARROW) {
-            return 1 + random.nextInt(4); // 1-4 arasi ok
-        }
-        return 1;
     }
 }
