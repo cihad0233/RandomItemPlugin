@@ -4,6 +4,7 @@ import com.oyun.randomitem.RandomItemPlugin;
 import com.oyun.randomitem.arena.Arena;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,6 +40,10 @@ public class PlayerListener implements Listener {
         Bukkit.getScheduler().runTask(plugin, () -> {
             p.spigot().respawn();
             p.setGameMode(GameMode.SPECTATOR);
+
+            Location specLoc = plugin.getSettings().getSpectatorLocation();
+            if (specLoc == null) specLoc = plugin.getSettings().getLobbyLocation();
+            if (specLoc != null) p.teleport(specLoc);
         });
     }
 

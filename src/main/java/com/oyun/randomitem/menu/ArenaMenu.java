@@ -24,7 +24,7 @@ public class ArenaMenu {
     public static Inventory build(RandomItemPlugin plugin) {
         Inventory inv = Bukkit.createInventory(null, SIZE, TITLE);
 
-        int slot = 0;
+        int slot = plugin.getSettings().getMenuStartSlot();
         for (Arena arena : plugin.getArenaManager().getArenas().values()) {
             if (slot >= SIZE) break;
             inv.setItem(slot, buildItem(arena));

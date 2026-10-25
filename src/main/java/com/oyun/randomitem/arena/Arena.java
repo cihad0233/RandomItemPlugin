@@ -12,17 +12,19 @@ public class Arena {
 
     private final String name;
     private String worldName;
-    private final Location[] spawnPoints = new Location[5];
+    private Location[] spawnPoints;
     private Location npcLocation;
     private UUID npcEntityId;
-    private final int maxPlayers = 5;
+    private int maxPlayers;
 
     private ArenaState state = ArenaState.BEKLEMEDE;
     private final LinkedHashSet<UUID> players = new LinkedHashSet<>();
     private final Set<UUID> alivePlayers = new HashSet<>();
 
-    public Arena(String name) {
+    public Arena(String name, int maxPlayers) {
         this.name = name;
+        this.maxPlayers = Math.max(2, maxPlayers);
+        this.spawnPoints = new Location[this.maxPlayers];
     }
 
     public String getName() { return name; }
@@ -33,7 +35,9 @@ public class Arena {
     public Location[] getSpawnPoints() { return spawnPoints; }
 
     public void setSpawnPoint(int index, Location loc) {
-        if (index < 1 || index > 5) throw new IllegalArgumentException("Spawn index 1-5 araliginda olmali");
+        if (index < 1 || index > maxPlayers) {
+            throw new IllegalArgumentException("Spawn index 1-" + maxPlayers + " araliginda olmali");
+        }
         spawnPoints[index - 1] = loc;
         if (loc != null && loc.getWorld() != null) {
             worldName = loc.getWorld().getName();
@@ -75,7 +79,7 @@ public class Arena {
         alivePlayers.remove(p.getUniqueId());
     }
 
-    // Oyuncunun katilma sirasina gore hangi spawn noktasina (0-4) denk geldigini dondurur
+    // Oyuncunun katilma sirasina gore hangi spawn noktasina denk geldigini dondurur
     public int getSpawnIndexFor(Player p) {
         int i = 0;
         for (UUID id : players) {

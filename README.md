@@ -44,14 +44,29 @@ Minecraft'ta gerçek bir "9x9" envanter yok (bir sandık en fazla 9x6 = 54 slot 
 
 | Komut | Yetki | Açıklama |
 |---|---|---|
-| `/ri create <isim>` | randomitem.admin | Yeni harita oluşturur |
+| `/ri create <isim>` | randomitem.admin | Yeni harita oluşturur, otomatik "seçili harita" yapar |
+| `/ri select <isim>` | randomitem.admin | Bir haritayı "seçili" yapar (sonraki komutlarda ismi tekrar yazmaya gerek kalmaz) |
 | `/ri delete <isim>` | randomitem.admin | Haritayı siler |
-| `/ri setspawn <isim> <1-5>` | randomitem.admin | O anki konumu doğma noktası yapar |
-| `/ri setnpc <isim>` | randomitem.admin | Bulunduğun yere menü NPC'si koyar |
+| `/ri setspawn <numara>` | randomitem.admin | Seçili haritaya o anki konumu doğma noktası yapar |
+| `/ri setspawn <isim> <numara>` | randomitem.admin | Belirli bir haritaya doğma noktası ekler |
+| `/ri setnpc [isim]` | randomitem.admin | Bulunduğun yere menü NPC'si koyar (isim verilmezse seçili harita) |
+| `/ri setlobby` | randomitem.admin | Oyun bitince oyuncuların ışınlanacağı lobi noktasını ayarlar |
+| `/ri setspectator` | randomitem.admin | Ölen oyuncuların izleyici modunda bekleyeceği noktayı ayarlar |
 | `/ri list` | - | Haritaları ve durumlarını listeler |
 | `/ri menu` | - | Harita menüsünü açar |
-| `/ri forcestart <isim>` | randomitem.admin | Oyunu elle başlatır |
+| `/ri forcestart <isim>` | randomitem.admin | Oyunu elle başlatır (spawn'lar eksikse reddeder) |
 | `/ri leave` | - | Oyundan ayrılır |
+
+## config.yml ile ayarlanabilenler
+
+Eklenti ilk açıldığında `plugins/RandomItemPlugin/config.yml` dosyası otomatik oluşur. Düzenleyip `/reload` yaptığında (ya da sunucuyu yeniden başlattığında) devreye girer:
+
+- `max-players`: Yeni oluşturulacak haritalardaki oyuncu/doğma noktası sayısı (varsayılan 4)
+- `item-interval-seconds`: Oyun sırasında kaç saniyede bir rastgele eşya verileceği (varsayılan 15)
+- `menu-start-slot`: Harita menüsünde ilk haritanın yerleşeceği slot (0-53, varsayılan 20)
+- `placeable-weight`: "placeable" listesindeki (inşaat) blokların diğer eşyalara göre kaç kat daha sık geleceği
+- `items.placeable` / `items.other`: Rastgele dağıtılacak eşya listeleri (1.8 Material isimleriyle)
+- `lobby` / `spectator-spawn`: `/ri setlobby` ve `/ri setspectator` ile otomatik yazılır, elle dokunmana gerek yok
 
 ## .jar dosyasını hazır olarak alma (önerilen, kurulum gerektirmez)
 

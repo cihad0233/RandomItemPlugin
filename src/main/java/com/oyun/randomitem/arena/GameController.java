@@ -109,12 +109,16 @@ public class GameController {
     }
 
     public void endGame(Arena arena) {
+        Location lobby = plugin.getSettings().getLobbyLocation();
+        if (lobby == null) {
+            lobby = Bukkit.getWorlds().get(0).getSpawnLocation();
+        }
+
         for (UUID id : arena.getPlayers()) {
             Player p = Bukkit.getPlayer(id);
             if (p != null) {
-                p.setGameMode(GameMode.SURVIVAL);
-                Location mainSpawn = Bukkit.getWorlds().get(0).getSpawnLocation();
-                p.teleport(mainSpawn);
+                p.teleport(lobby);
+                p.setGameMode(GameMode.SURVIVAL); // izleyici modundaysa da buradan cikarir
             }
         }
         arena.reset();

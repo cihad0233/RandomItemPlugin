@@ -26,7 +26,7 @@ public class ArenaManager {
     }
 
     public Arena create(String name) {
-        Arena arena = new Arena(name);
+        Arena arena = new Arena(name, plugin.getSettings().getMaxPlayers());
         arenas.put(name.toLowerCase(), arena);
         save();
         return arena;
@@ -54,12 +54,13 @@ public class ArenaManager {
         if (cfg.getConfigurationSection("arenas") == null) return;
 
         for (String key : cfg.getConfigurationSection("arenas").getKeys(false)) {
-            Arena arena = new Arena(key);
             String base = "arenas." + key;
+            int maxPlayers = cfg.getInt(base + ".maxplayers", plugin.getSettings().getMaxPlayers());
 
+            Arena arena = new Arena(key, maxPlayers);
             arena.setWorldName(cfg.getString(base + ".world"));
 
-            for (int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= maxPlayers; i++) {
                 Location loc = LocationUtil.deserialize(cfg.getString(base + ".spawn" + i));
                 if (loc != null) arena.setSpawnPoint(i, loc);
             }
@@ -85,12 +86,14 @@ public class ArenaManager {
         for (Arena arena : arenas.values()) {
             String base = "arenas." + arena.getName();
 
+            cfg.set(base + ".maxplayers", arena.getMaxPlayers());
+
             if (arena.getWorldName() != null) {
                 cfg.set(base + ".world", arena.getWorldName());
             }
 
             Location[] spawns = arena.getSpawnPoints();
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < spawns.length; i++) {
                 if (spawns[i] != null) {
                     cfg.set(base + ".spawn" + (i + 1), LocationUtil.serialize(spawns[i]));
                 }

@@ -55,6 +55,11 @@ public class RandomItemCommand implements CommandExecutor {
                 return handleSetSpawn(sender, args);
             case "setnpc":
                 return handleSetNpc(sender, args);
+            case "setlobby":
+                return handleSetLobby(sender);
+            case "setspectator":
+            case "setspector":
+                return handleSetSpectator(sender);
             case "list":
                 return handleList(sender);
             case "menu":
@@ -82,7 +87,7 @@ public class RandomItemCommand implements CommandExecutor {
         selectedArena.put(keyFor(sender), name);
         sender.sendMessage(ok("'" + name + "' haritasi olusturuldu ve secili harita yapildi."));
         sender.sendMessage(ChatColor.GRAY + "Simdi her dogma noktasina gidip " + ChatColor.YELLOW
-                + "/ri setspawn <1-5>" + ChatColor.GRAY + " yaz (harita ismini tekrar yazmana gerek yok).");
+                + "/ri setspawn <numara>" + ChatColor.GRAY + " yaz (harita ismini tekrar yazmana gerek yok).");
         return true;
     }
 
@@ -115,8 +120,8 @@ public class RandomItemCommand implements CommandExecutor {
         if (!(sender instanceof Player)) { sender.sendMessage(err("Bu komut sadece oyun icinde kullanilabilir.")); return true; }
         if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
         if (args.length < 2) {
-            sender.sendMessage(err("Kullanim: /ri setspawn <1-5>  (once /ri create veya /ri select ile bir harita sec)"));
-            sender.sendMessage(err("ya da:    /ri setspawn <isim> <1-5>"));
+            sender.sendMessage(err("Kullanim: /ri setspawn <numara>  (once /ri create veya /ri select ile bir harita sec)"));
+            sender.sendMessage(err("ya da:    /ri setspawn <isim> <numara>"));
             return true;
         }
 
@@ -124,13 +129,13 @@ public class RandomItemCommand implements CommandExecutor {
         String indexArg;
 
         if (args.length >= 3) {
-            // /ri setspawn <isim> <1-5> - eski/acik format
+            // /ri setspawn <isim> <numara> - eski/acik format
             arena = plugin.getArenaManager().get(args[1]);
             if (arena == null) { sender.sendMessage(err("Harita bulunamadi: " + args[1])); return true; }
             indexArg = args[2];
             selectedArena.put(keyFor(sender), arena.getName());
         } else {
-            // /ri setspawn <1-5> - secili haritayi kullan
+            // /ri setspawn <numara> - secili haritayi kullan
             String selected = selectedArena.get(keyFor(sender));
             if (selected == null || plugin.getArenaManager().get(selected) == null) {
                 sender.sendMessage(err("Secili bir haritan yok. Once /ri create <isim> veya /ri select <isim> kullan."));
@@ -140,15 +145,16 @@ public class RandomItemCommand implements CommandExecutor {
             indexArg = args[1];
         }
 
+        int maxP = arena.getMaxPlayers();
         int index;
         try {
             index = Integer.parseInt(indexArg);
         } catch (NumberFormatException ex) {
-            sender.sendMessage(err("Dogma noktasi numarasi 1 ile 5 arasinda bir sayi olmali."));
+            sender.sendMessage(err("Dogma noktasi numarasi 1 ile " + maxP + " arasinda bir sayi olmali."));
             return true;
         }
-        if (index < 1 || index > 5) {
-            sender.sendMessage(err("Dogma noktasi numarasi 1 ile 5 arasinda olmali."));
+        if (index < 1 || index > maxP) {
+            sender.sendMessage(err("Dogma noktasi numarasi 1 ile " + maxP + " arasinda olmali."));
             return true;
         }
 
@@ -157,10 +163,10 @@ public class RandomItemCommand implements CommandExecutor {
         plugin.getArenaManager().save();
 
         int doluSayisi = 0;
-        for (int i = 1; i <= 5; i++) if (arena.getSpawnPoints()[i - 1] != null) doluSayisi++;
+        for (Location l : arena.getSpawnPoints()) if (l != null) doluSayisi++;
 
         sender.sendMessage(ok(index + ". dogma noktasi ayarlandi. (" + arena.getName() + ") - "
-                + doluSayisi + "/5 tamamlandi"));
+                + doluSayisi + "/" + maxP + " tamamlandi"));
 
         if (arena.hasAllSpawns()) {
             sender.sendMessage(ChatColor.GOLD + "Tum dogma noktalari tamam! Simdi /ri setnpc " + arena.getName() + " ile menu NPC'sini koyabilirsin.");
@@ -209,6 +215,26 @@ public class RandomItemCommand implements CommandExecutor {
         return true;
     }
 
+    private boolean handleSetLobby(CommandSender sender) {
+        if (!(sender instanceof Player)) { sender.sendMessage(err("Bu komut sadece oyun icinde kullanilabilir.")); return true; }
+        if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
+
+        Player p = (Player) sender;
+        plugin.getSettings().setLobbyLocation(p.getLocation());
+        sender.sendMessage(ok("Ana lobi konumu ayarlandi. Oyun bitince oyuncular buraya isinlanacak."));
+        return true;
+    }
+
+    private boolean handleSetSpectator(CommandSender sender) {
+        if (!(sender instanceof Player)) { sender.sendMessage(err("Bu komut sadece oyun icinde kullanilabilir.")); return true; }
+        if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
+
+        Player p = (Player) sender;
+        plugin.getSettings().setSpectatorLocation(p.getLocation());
+        sender.sendMessage(ok("Izleyici konumu ayarlandi. Olen oyuncular buraya isinlanip izleyici moduna gececek."));
+        return true;
+    }
+
     private boolean handleList(CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "--- Haritalar ---");
         if (plugin.getArenaManager().getArenas().isEmpty()) {
@@ -237,8 +263,8 @@ public class RandomItemCommand implements CommandExecutor {
         if (arena == null) { sender.sendMessage(err("Harita bulunamadi.")); return true; }
 
         if (!arena.hasAllSpawns()) {
-            sender.sendMessage(err("Bu haritanin 5 dogma noktasi da ayarlanmamis, oyun baslatilamaz."));
-            sender.sendMessage(err("Once /ri select " + arena.getName() + " ve /ri setspawn <1-5> ile tamamla."));
+            sender.sendMessage(err("Bu haritanin " + arena.getMaxPlayers() + " dogma noktasi da ayarlanmamis, oyun baslatilamaz."));
+            sender.sendMessage(err("Once /ri select " + arena.getName() + " ve /ri setspawn <numara> ile tamamla."));
             return true;
         }
         if (arena.getPlayers().isEmpty()) {
@@ -271,9 +297,11 @@ public class RandomItemCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.YELLOW + "/ri create <isim>" + ChatColor.GRAY + " - yeni harita olustur (otomatik secer)");
         sender.sendMessage(ChatColor.YELLOW + "/ri select <isim>" + ChatColor.GRAY + " - bir haritayi 'secili' yap");
         sender.sendMessage(ChatColor.YELLOW + "/ri delete <isim>" + ChatColor.GRAY + " - harita sil");
-        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <1-5>" + ChatColor.GRAY + " - secili haritaya dogma noktasi ekle");
-        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <isim> <1-5>" + ChatColor.GRAY + " - belirli haritaya dogma noktasi ekle");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <numara>" + ChatColor.GRAY + " - secili haritaya dogma noktasi ekle");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <isim> <numara>" + ChatColor.GRAY + " - belirli haritaya dogma noktasi ekle");
         sender.sendMessage(ChatColor.YELLOW + "/ri setnpc <isim>" + ChatColor.GRAY + " - menu npc'si olustur");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setlobby" + ChatColor.GRAY + " - oyun bitince gidilecek lobi noktasi");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setspectator" + ChatColor.GRAY + " - olen oyuncularin gidecegi izleyici noktasi");
         sender.sendMessage(ChatColor.YELLOW + "/ri list" + ChatColor.GRAY + " - haritalari listele");
         sender.sendMessage(ChatColor.YELLOW + "/ri menu" + ChatColor.GRAY + " - harita menusunu ac");
         sender.sendMessage(ChatColor.YELLOW + "/ri forcestart <isim>" + ChatColor.GRAY + " - oyunu zorla baslat");

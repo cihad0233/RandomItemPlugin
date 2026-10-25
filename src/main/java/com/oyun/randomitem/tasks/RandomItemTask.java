@@ -9,21 +9,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 public class RandomItemTask extends BukkitRunnable {
-
-    // Oyunculara rastgele dagitilabilecek esyalarin havuzu.
-    // Buraya istediginiz kadar Material ekleyip cikarabilirsiniz.
-    private static final Material[] ITEM_POOL = new Material[] {
-            Material.IRON_SWORD, Material.DIAMOND_SWORD, Material.BOW, Material.ARROW,
-            Material.IRON_CHESTPLATE, Material.DIAMOND_CHESTPLATE, Material.IRON_HELMET,
-            Material.GOLDEN_APPLE, Material.APPLE, Material.COOKED_BEEF, Material.ENDER_PEARL,
-            Material.POTION, Material.TNT, Material.FLINT_AND_STEEL,
-            Material.WATER_BUCKET, Material.LAVA_BUCKET, Material.IRON_INGOT,
-            Material.WEB, Material.FISHING_ROD
-    };
 
     private final RandomItemPlugin plugin;
     private final Random random = new Random();
@@ -34,6 +25,18 @@ public class RandomItemTask extends BukkitRunnable {
 
     @Override
     public void run() {
+        List<Material> placeable = plugin.getSettings().getPlaceableItems();
+        List<Material> other = plugin.getSettings().getOtherItems();
+        int weight = plugin.getSettings().getPlaceableWeight();
+
+        if (placeable.isEmpty() && other.isEmpty()) return;
+
+        // Agirlikli havuz: koyulabilir bloklar "weight" kadar tekrar eklenir, daha sik cikmasi icin
+        List<Material> pool = new ArrayList<>();
+        for (int i = 0; i < weight; i++) pool.addAll(placeable);
+        pool.addAll(other);
+        if (pool.isEmpty()) return;
+
         for (Arena arena : plugin.getArenaManager().getArenas().values()) {
             if (arena.getState() != ArenaState.OYUNDA) continue;
 
@@ -41,24 +44,22 @@ public class RandomItemTask extends BukkitRunnable {
                 Player p = Bukkit.getPlayer(id);
                 if (p == null) continue;
 
-                ItemStack item = randomItem();
-                p.getInventory().addItem(item);
-                p.sendMessage("§aYeni rastgele esya aldin: §e" + formatName(item.getType()));
+                Material mat = pool.get(random.nextInt(pool.size()));
+                int amount = determineAmount(mat, placeable);
+
+                p.getInventory().addItem(new ItemStack(mat, amount));
+                // Bilerek chat mesaji yok - esya sessizce envantere ekleniyor.
             }
         }
     }
 
-    private ItemStack randomItem() {
-        Material mat = ITEM_POOL[random.nextInt(ITEM_POOL.length)];
-        int amount = 1;
-        if (mat == Material.ARROW || mat == Material.WEB) {
-            amount = 1 + random.nextInt(4);
+    private int determineAmount(Material mat, List<Material> placeable) {
+        if (placeable.contains(mat)) {
+            return 2 + random.nextInt(7); // 2-8 arasi, bir seyler insa edilebilsin diye
         }
-        return new ItemStack(mat, amount);
-    }
-
-    private String formatName(Material mat) {
-        String name = mat.name().toLowerCase().replace("_", " ");
-        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        if (mat == Material.ARROW) {
+            return 1 + random.nextInt(4); // 1-4 arasi ok
+        }
+        return 1;
     }
 }
