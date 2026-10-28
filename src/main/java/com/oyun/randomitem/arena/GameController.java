@@ -96,18 +96,18 @@ public class GameController {
                 }
                 if (secondsLeft <= 0) {
                     cancel();
+                    sendTitleToArena(arena, ChatColor.GREEN + "" + ChatColor.BOLD + "BASLA!", "");
                     start(arena);
                     return;
                 }
 
-                String title = secondsLeft <= 5
-                        ? ChatColor.RED + "" + ChatColor.BOLD + secondsLeft
-                        : ChatColor.YELLOW + "" + secondsLeft;
-                String subtitle = ChatColor.GRAY + "Oyun basliyor...";
-
-                for (UUID id : arena.getPlayers()) {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null) p.sendTitle(title, subtitle);
+                // Sadece 10'da bir kere, sonra 9-8-7-6 sessiz gecilir, 5'ten itibaren
+                // her saniye tekrar gosterilir (5-4-3-2-1).
+                if (secondsLeft == 10 || secondsLeft <= 5) {
+                    String title = secondsLeft <= 5
+                            ? ChatColor.RED + "" + ChatColor.BOLD + secondsLeft
+                            : ChatColor.YELLOW + "" + secondsLeft;
+                    sendTitleToArena(arena, title, ChatColor.GRAY + "Oyun basliyor...");
                 }
                 secondsLeft--;
             }
@@ -167,6 +167,9 @@ public class GameController {
             if (p != null) {
                 p.teleport(lobby);
                 p.setGameMode(GameMode.SURVIVAL); // izleyici modundaysa da buradan cikarir
+                p.getInventory().clear();
+                p.setFoodLevel(20);
+                p.setHealth(20.0);
             }
         }
 
@@ -179,6 +182,18 @@ public class GameController {
         arena.getPlacedBlocks().clear();
 
         arena.reset();
+    }
+
+    private void sendTitleToArena(Arena arena, String title, String subtitle) {
+        for (UUID id : arena.getPlayers()) {
+            Player p = Bukkit.getPlayer(id);
+            if (p == null) continue;
+            try {
+                p.sendTitle(title, subtitle);
+            } catch (Throwable ignored) {
+                // Bazi sunucu corelerinde title API sorun cikarabilir, bu geri sayimi durdurmasin.
+            }
+        }
     }
 
     private void broadcast(Arena arena, String message) {
