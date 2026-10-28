@@ -34,8 +34,9 @@ public class ArenaMenu {
     }
 
     private static ItemStack buildItem(Arena arena) {
+        // BASLIYOR (geri sayim) sirasinda hala katilinabilir, sadece oyun gercekten
+        // basladiktan (OYUNDA) veya bittikten (BITTI) sonra kilitlenir.
         boolean kilitli = arena.getState() == ArenaState.OYUNDA
-                || arena.getState() == ArenaState.BASLIYOR
                 || arena.getState() == ArenaState.BITTI
                 || arena.isFull()
                 || !arena.hasAllSpawns();
@@ -50,7 +51,6 @@ public class ArenaMenu {
         List<String> lore = new ArrayList<>();
         lore.add("");
         lore.add(ChatColor.WHITE + "Durum: " + durumMetni(arena));
-        lore.add("");
         lore.add(ChatColor.WHITE + "Oyuncular: " + ChatColor.YELLOW
                 + arena.getPlayers().size() + "/" + arena.getMaxPlayers());
         lore.add("");
@@ -60,7 +60,6 @@ public class ArenaMenu {
         } else {
             lore.add(ChatColor.GRAY + "\u2022 Oynamak icin tikla");
         }
-        lore.add(ChatColor.YELLOW + "Favorilere eklemek icin sag tikla!");
 
         meta.setLore(lore);
         item.setItemMeta(meta);
@@ -70,14 +69,14 @@ public class ArenaMenu {
     private static String durumMetni(Arena arena) {
         switch (arena.getState()) {
             case BASLIYOR:
-                return ChatColor.YELLOW + "basliyor";
+                return ChatColor.YELLOW + "BASLIYOR";
             case OYUNDA:
-                return ChatColor.RED + "oynaniyor";
+                return ChatColor.RED + "OYNANIYOR";
             case BITTI:
-                return ChatColor.RED + "bitiyor";
+                return ChatColor.RED + "BITIYOR";
             case BEKLEMEDE:
             default:
-                return ChatColor.AQUA + "beklemede";
+                return ChatColor.AQUA + "BEKLEMEDE";
         }
     }
 }

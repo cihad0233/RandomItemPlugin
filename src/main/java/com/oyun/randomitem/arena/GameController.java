@@ -26,7 +26,9 @@ public class GameController {
     }
 
     public void join(Player p, Arena arena) {
-        if (arena.getState() == ArenaState.OYUNDA || arena.getState() == ArenaState.BASLIYOR) {
+        // BASLIYOR (geri sayim) sirasinda hala katilinabilir, sadece oyun gercekten
+        // basladiktan (OYUNDA) veya biterken (BITTI) sonra engellenir.
+        if (arena.getState() == ArenaState.OYUNDA || arena.getState() == ArenaState.BITTI) {
             p.sendMessage(ChatColor.RED + "Bu harita su an oynaniyor, girilemez!");
             return;
         }
