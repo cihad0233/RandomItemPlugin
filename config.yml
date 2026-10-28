@@ -1,0 +1,66 @@
+# RandomItemPlugin ayarlari
+# Degistirdikten sonra sunucu konsoluna /reload yaz ya da sunucuyu yeniden baslat.
+
+# Bir haritaya girebilecek maksimum oyuncu sayisi.
+# Yeni olusturulan haritalar bu kadar dogma noktasi ister (/ri setspawn 1..N).
+# Not: zaten olusturulmus bir haritanin oyuncu sayisini degistirmez, sadece
+# bundan sonra /ri create ile olusturulacak haritalari etkiler.
+max-players: 4
+
+# Bir haritanin baslayabilmesi icin gereken minimum oyuncu sayisi.
+# Bu sayiya ulasilinca geri sayim (ekranda) baslar, maksimuma ulasmasi beklenmez.
+min-players: 2
+
+# Oyun sirasinda kac saniyede bir oyunculara rastgele esya verilecek
+item-interval-seconds: 15
+
+# Harita secim menusunde ilk haritanin yerlesecegi slot numarasi (0-53 arasi, 54 sloluk GUI, sol ust kose = 0)
+menu-start-slot: 20
+
+# "placeable" (koyulabilir/insaat) listesindeki esyalarin "other" listesindeki esyalara
+# gore kac kat daha sik gelecegi. 3 demek: insaat bloklari diger esyalardan 3 kat daha sik dusuyor demek.
+placeable-weight: 3
+
+items:
+  # Koyulabilir/insaat bloklari - daha sik gelsin diye placeable-weight ile carpiliyor
+  placeable:
+    - STONE
+    - COBBLESTONE
+    - DIRT
+    - SAND
+    - WOOD
+    - LOG
+    - SANDSTONE
+    - GLASS
+    - WOOL
+    - BRICK
+    - NETHERRACK
+    - OBSIDIAN
+    - LADDER
+    - FENCE
+
+  # Diger esyalar (silah, zirh, yiyecek, iksir vb.) - normal siklikta gelir
+  other:
+    - IRON_SWORD
+    - DIAMOND_SWORD
+    - BOW
+    - ARROW
+    - IRON_CHESTPLATE
+    - DIAMOND_CHESTPLATE
+    - IRON_HELMET
+    - GOLDEN_APPLE
+    - APPLE
+    - COOKED_BEEF
+    - ENDER_PEARL
+    - POTION
+    - TNT
+    - FLINT_AND_STEEL
+    - WATER_BUCKET
+    - LAVA_BUCKET
+    - IRON_INGOT
+    - WEB
+    - FISHING_ROD
+
+# Asagidaki iki deger /ri setlobby ve /ri setspectator komutlariyla otomatik yazilir, elle duzenlemene gerek yok.
+lobby: ""
+spectator-spawn: ""
