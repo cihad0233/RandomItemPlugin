@@ -7,6 +7,10 @@
 # bundan sonra /ri create ile olusturulacak haritalari etkiler.
 max-players: 4
 
+# Bir haritanin baslayabilmesi icin gereken minimum oyuncu sayisi.
+# Bu sayiya ulasilinca geri sayim (ekranda) baslar, maksimuma ulasmasi beklenmez.
+min-players: 2
+
 # Oyun sirasinda kac saniyede bir oyunculara rastgele esya verilecek
 item-interval-seconds: 15
 

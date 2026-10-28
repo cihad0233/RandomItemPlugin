@@ -29,6 +29,10 @@ public class Settings {
         return Math.max(2, cfg().getInt("max-players", 4));
     }
 
+    public int getMinPlayers() {
+        return Math.max(2, cfg().getInt("min-players", 2));
+    }
+
     public long getItemIntervalTicks() {
         int seconds = Math.max(1, cfg().getInt("item-interval-seconds", 15));
         return seconds * 20L;

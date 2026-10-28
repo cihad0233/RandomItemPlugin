@@ -55,6 +55,8 @@ public class RandomItemCommand implements CommandExecutor {
                 return handleSetSpawn(sender, args);
             case "setnpc":
                 return handleSetNpc(sender, args);
+            case "setminplayers":
+                return handleSetMinPlayers(sender, args);
             case "setlobby":
                 return handleSetLobby(sender);
             case "setspectator":
@@ -215,6 +217,47 @@ public class RandomItemCommand implements CommandExecutor {
         return true;
     }
 
+    private boolean handleSetMinPlayers(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
+
+        Arena arena;
+        String numArg;
+        if (args.length >= 3) {
+            arena = plugin.getArenaManager().get(args[1]);
+            if (arena == null) { sender.sendMessage(err("Harita bulunamadi: " + args[1])); return true; }
+            numArg = args[2];
+            selectedArena.put(keyFor(sender), arena.getName());
+        } else if (args.length == 2) {
+            String selected = selectedArena.get(keyFor(sender));
+            if (selected == null || plugin.getArenaManager().get(selected) == null) {
+                sender.sendMessage(err("Secili bir haritan yok. Kullanim: /ri setminplayers <isim> <sayi>"));
+                return true;
+            }
+            arena = plugin.getArenaManager().get(selected);
+            numArg = args[1];
+        } else {
+            sender.sendMessage(err("Kullanim: /ri setminplayers <sayi>  ya da  /ri setminplayers <isim> <sayi>"));
+            return true;
+        }
+
+        int value;
+        try {
+            value = Integer.parseInt(numArg);
+        } catch (NumberFormatException ex) {
+            sender.sendMessage(err("Sayi gecersiz."));
+            return true;
+        }
+        if (value < 2 || value > arena.getMaxPlayers()) {
+            sender.sendMessage(err("Minimum oyuncu sayisi 2 ile " + arena.getMaxPlayers() + " (maksimum) arasinda olmali."));
+            return true;
+        }
+
+        arena.setMinPlayers(value);
+        plugin.getArenaManager().save();
+        sender.sendMessage(ok("'" + arena.getName() + "' haritasinin minimum oyuncu sayisi " + value + " yapildi."));
+        return true;
+    }
+
     private boolean handleSetLobby(CommandSender sender) {
         if (!(sender instanceof Player)) { sender.sendMessage(err("Bu komut sadece oyun icinde kullanilabilir.")); return true; }
         if (!sender.hasPermission("randomitem.admin")) { noPerm(sender); return true; }
@@ -300,6 +343,7 @@ public class RandomItemCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <numara>" + ChatColor.GRAY + " - secili haritaya dogma noktasi ekle");
         sender.sendMessage(ChatColor.YELLOW + "/ri setspawn <isim> <numara>" + ChatColor.GRAY + " - belirli haritaya dogma noktasi ekle");
         sender.sendMessage(ChatColor.YELLOW + "/ri setnpc <isim>" + ChatColor.GRAY + " - menu npc'si olustur");
+        sender.sendMessage(ChatColor.YELLOW + "/ri setminplayers <sayi>" + ChatColor.GRAY + " - haritanin min. oyuncu sayisi (geri sayim bu sayiya ulasinca baslar)");
         sender.sendMessage(ChatColor.YELLOW + "/ri setlobby" + ChatColor.GRAY + " - oyun bitince gidilecek lobi noktasi");
         sender.sendMessage(ChatColor.YELLOW + "/ri setspectator" + ChatColor.GRAY + " - olen oyuncularin gidecegi izleyici noktasi");
         sender.sendMessage(ChatColor.YELLOW + "/ri list" + ChatColor.GRAY + " - haritalari listele");

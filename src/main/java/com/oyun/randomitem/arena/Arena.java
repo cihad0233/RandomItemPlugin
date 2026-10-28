@@ -16,6 +16,7 @@ public class Arena {
     private Location npcLocation;
     private UUID npcEntityId;
     private int maxPlayers;
+    private int minPlayers;
 
     private ArenaState state = ArenaState.BEKLEMEDE;
     private final LinkedHashSet<UUID> players = new LinkedHashSet<>();
@@ -24,9 +25,10 @@ public class Arena {
     // Oyun sirasinda oyuncularin koydugu bloklarin konumlari - oyun bitince temizlenir
     private final Set<Location> placedBlocks = new HashSet<>();
 
-    public Arena(String name, int maxPlayers) {
+    public Arena(String name, int maxPlayers, int minPlayers) {
         this.name = name;
         this.maxPlayers = Math.max(2, maxPlayers);
+        this.minPlayers = Math.min(Math.max(2, minPlayers), this.maxPlayers);
         this.spawnPoints = new Location[this.maxPlayers];
     }
 
@@ -59,6 +61,11 @@ public class Arena {
     public void setNpcEntityId(UUID npcEntityId) { this.npcEntityId = npcEntityId; }
 
     public int getMaxPlayers() { return maxPlayers; }
+
+    public int getMinPlayers() { return minPlayers; }
+    public void setMinPlayers(int minPlayers) {
+        this.minPlayers = Math.min(Math.max(2, minPlayers), this.maxPlayers);
+    }
 
     public ArenaState getState() { return state; }
     public void setState(ArenaState state) { this.state = state; }

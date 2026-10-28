@@ -7,6 +7,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
 
@@ -50,8 +51,8 @@ public class GameController {
         broadcast(arena, ChatColor.YELLOW + p.getDisplayName() + ChatColor.GRAY + " oyuna katildi. ("
                 + arena.getPlayers().size() + "/" + arena.getMaxPlayers() + ")");
 
-        if (arena.isFull()) {
-            startCountdown(arena, 5);
+        if (arena.getState() == ArenaState.BEKLEMEDE && arena.getPlayers().size() >= arena.getMinPlayers()) {
+            startCountdown(arena);
         }
     }
 
@@ -65,19 +66,52 @@ public class GameController {
         }
 
         broadcast(arena, ChatColor.YELLOW + p.getDisplayName() + ChatColor.GRAY + " oyundan ayrildi.");
+
+        if (arena.getState() == ArenaState.BASLIYOR && arena.getPlayers().size() < arena.getMinPlayers()) {
+            // Geri sayim sirasinda minimumun altina dusuldu, bekleme durumuna geri don
+            arena.setState(ArenaState.BEKLEMEDE);
+            broadcast(arena, ChatColor.RED + "Yeterli oyuncu kalmadi, geri sayim iptal edildi.");
+        }
+
         if (arena.getState() == ArenaState.OYUNDA) {
             checkWinner(arena);
         }
     }
 
-    public void startCountdown(Arena arena, int seconds) {
+    // 10 saniyelik, ekranda (title) gosterilen geri sayim. Minimum oyuncu sayisina
+    // ulasilinca baslar, maksimum beklenmez. Sure boyunca oyuncular hareket edemez
+    // (PlayerListener'daki BASLIYOR durumu kontrolu ile).
+    public void startCountdown(Arena arena) {
         arena.setState(ArenaState.BASLIYOR);
-        broadcast(arena, ChatColor.GREEN + "Harita doldu! Oyun " + seconds + " saniye icinde basliyor.");
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (arena.getState() == ArenaState.BASLIYOR) {
-                start(arena);
+        broadcast(arena, ChatColor.GREEN + "Yeterli oyuncu var! Geri sayim basladi.");
+
+        new BukkitRunnable() {
+            int secondsLeft = 10;
+
+            @Override
+            public void run() {
+                if (arena.getState() != ArenaState.BASLIYOR) {
+                    cancel();
+                    return;
+                }
+                if (secondsLeft <= 0) {
+                    cancel();
+                    start(arena);
+                    return;
+                }
+
+                String title = secondsLeft <= 5
+                        ? ChatColor.RED + "" + ChatColor.BOLD + secondsLeft
+                        : ChatColor.YELLOW + "" + secondsLeft;
+                String subtitle = ChatColor.GRAY + "Oyun basliyor...";
+
+                for (UUID id : arena.getPlayers()) {
+                    Player p = Bukkit.getPlayer(id);
+                    if (p != null) p.sendTitle(title, subtitle);
+                }
+                secondsLeft--;
             }
-        }, seconds * 20L);
+        }.runTaskTimer(plugin, 0L, 20L);
     }
 
     public void start(Arena arena) {
@@ -114,7 +148,11 @@ public class GameController {
                 if (winner != null) winnerName = winner.getDisplayName();
             }
             broadcast(arena, ChatColor.GOLD + "Oyun bitti! Kazanan: " + winnerName);
-            endGame(arena);
+
+            // Oyun bitti ama herkesi hemen degil, 5 saniye sonra lobiye atiyoruz
+            // (kazanma anini gormeleri icin kisa bir bekleme).
+            arena.setState(ArenaState.BITTI);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> endGame(arena), 100L);
         }
     }
 

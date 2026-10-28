@@ -26,7 +26,7 @@ public class ArenaManager {
     }
 
     public Arena create(String name) {
-        Arena arena = new Arena(name, plugin.getSettings().getMaxPlayers());
+        Arena arena = new Arena(name, plugin.getSettings().getMaxPlayers(), plugin.getSettings().getMinPlayers());
         arenas.put(name.toLowerCase(), arena);
         save();
         return arena;
@@ -56,8 +56,9 @@ public class ArenaManager {
         for (String key : cfg.getConfigurationSection("arenas").getKeys(false)) {
             String base = "arenas." + key;
             int maxPlayers = cfg.getInt(base + ".maxplayers", plugin.getSettings().getMaxPlayers());
+            int minPlayers = cfg.getInt(base + ".minplayers", plugin.getSettings().getMinPlayers());
 
-            Arena arena = new Arena(key, maxPlayers);
+            Arena arena = new Arena(key, maxPlayers, minPlayers);
             arena.setWorldName(cfg.getString(base + ".world"));
 
             for (int i = 1; i <= maxPlayers; i++) {
@@ -87,6 +88,7 @@ public class ArenaManager {
             String base = "arenas." + arena.getName();
 
             cfg.set(base + ".maxplayers", arena.getMaxPlayers());
+            cfg.set(base + ".minplayers", arena.getMinPlayers());
 
             if (arena.getWorldName() != null) {
                 cfg.set(base + ".world", arena.getWorldName());
