@@ -27,6 +27,14 @@ public class RandomItemPlugin extends JavaPlugin {
         this.arenaManager = new ArenaManager(this);
         this.gameController = new GameController(this);
 
+        // Haritalari 1 tick gecikmeli yukle: boylece dunyayi olusturan eklentiler
+        // (orn. Multiverse-Core) kesinlikle hazir olduktan sonra spawn konumlari
+        // cozulur, sunucu her acilista spawn'lar kaybolmaz.
+        getServer().getScheduler().runTask(this, () -> {
+            arenaManager.load();
+            getLogger().info("Haritalar yuklendi: " + arenaManager.getArenas().size() + " adet.");
+        });
+
         getCommand("randomitem").setExecutor(new RandomItemCommand(this));
 
         getServer().getPluginManager().registerEvents(new NPCListener(this), this);

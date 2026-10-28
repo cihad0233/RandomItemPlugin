@@ -3,6 +3,8 @@ version: 1.0.0
 main: com.oyun.randomitem.RandomItemPlugin
 author: Claude
 
+softdepend: [Multiverse-Core]
+
 commands:
   randomitem:
     aliases: [ri, ritem]

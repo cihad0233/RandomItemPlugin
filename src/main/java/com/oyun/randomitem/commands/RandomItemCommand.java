@@ -336,7 +336,16 @@ public class RandomItemCommand implements CommandExecutor {
     }
 
     private void sendHelp(CommandSender sender) {
+        boolean admin = sender.hasPermission("randomitem.admin");
+
         sender.sendMessage(ChatColor.GOLD + "--- RandomItem Komutlari ---");
+        sender.sendMessage(ChatColor.YELLOW + "/ri menu" + ChatColor.GRAY + " - harita menusunu ac");
+        sender.sendMessage(ChatColor.YELLOW + "/ri list" + ChatColor.GRAY + " - haritalari listele");
+        sender.sendMessage(ChatColor.YELLOW + "/ri leave" + ChatColor.GRAY + " - oyundan ayril");
+
+        if (!admin) return;
+
+        sender.sendMessage(ChatColor.GOLD + "--- Yetkili Komutlari ---");
         sender.sendMessage(ChatColor.YELLOW + "/ri create <isim>" + ChatColor.GRAY + " - yeni harita olustur (otomatik secer)");
         sender.sendMessage(ChatColor.YELLOW + "/ri select <isim>" + ChatColor.GRAY + " - bir haritayi 'secili' yap");
         sender.sendMessage(ChatColor.YELLOW + "/ri delete <isim>" + ChatColor.GRAY + " - harita sil");
@@ -346,10 +355,7 @@ public class RandomItemCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.YELLOW + "/ri setminplayers <sayi>" + ChatColor.GRAY + " - haritanin min. oyuncu sayisi (geri sayim bu sayiya ulasinca baslar)");
         sender.sendMessage(ChatColor.YELLOW + "/ri setlobby" + ChatColor.GRAY + " - oyun bitince gidilecek lobi noktasi");
         sender.sendMessage(ChatColor.YELLOW + "/ri setspectator" + ChatColor.GRAY + " - olen oyuncularin gidecegi izleyici noktasi");
-        sender.sendMessage(ChatColor.YELLOW + "/ri list" + ChatColor.GRAY + " - haritalari listele");
-        sender.sendMessage(ChatColor.YELLOW + "/ri menu" + ChatColor.GRAY + " - harita menusunu ac");
         sender.sendMessage(ChatColor.YELLOW + "/ri forcestart <isim>" + ChatColor.GRAY + " - oyunu zorla baslat");
-        sender.sendMessage(ChatColor.YELLOW + "/ri leave" + ChatColor.GRAY + " - oyundan ayril");
     }
 
     private String ok(String msg) { return ChatColor.GREEN + "" + msg; }

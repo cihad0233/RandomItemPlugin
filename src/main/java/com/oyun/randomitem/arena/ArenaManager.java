@@ -22,7 +22,11 @@ public class ArenaManager {
     public ArenaManager(RandomItemPlugin plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "arenas.yml");
-        load();
+        // Burada hemen load() CAGIRMIYORUZ: sunucu yeni acilirken dunyayi olusturan
+        // eklenti (orn. Multiverse-Core) henuz kendi onEnable()'ini bitirmemis olabilir,
+        // boyle bir anda Bukkit.getWorld(...) null doner ve kayitli spawn konumlari
+        // sessizce kaybolur. Plugin, load()'u 1 tick sonra (tum eklentiler hazir
+        // olduktan sonra) cagirir - bkz. RandomItemPlugin.onEnable().
     }
 
     public Arena create(String name) {
