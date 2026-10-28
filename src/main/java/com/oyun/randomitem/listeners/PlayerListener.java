@@ -3,16 +3,22 @@ package com.oyun.randomitem.listeners;
 import com.oyun.randomitem.RandomItemPlugin;
 import com.oyun.randomitem.arena.Arena;
 import com.oyun.randomitem.arena.ArenaState;
+import com.oyun.randomitem.arena.GameController;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 
 public class PlayerListener implements Listener {
 
@@ -101,6 +107,24 @@ public class PlayerListener implements Listener {
         frozen.setYaw(to.getYaw());
         frozen.setPitch(to.getPitch());
         e.setTo(frozen);
+    }
+
+    // Envanterin son slotundaki kirmizi yatagi kullanınca oyundan ayril (lobiye don).
+    @EventHandler
+    public void onLeaveItemUse(PlayerInteractEvent e) {
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK && e.getAction() != Action.RIGHT_CLICK_AIR) return;
+
+        ItemStack item = e.getItem();
+        if (item == null || item.getType() != Material.BED) return;
+        if (!item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) return;
+        if (!ChatColor.stripColor(item.getItemMeta().getDisplayName()).equals(GameController.LEAVE_ITEM_NAME)) return;
+
+        Player p = e.getPlayer();
+        Arena arena = findArena(p);
+        if (arena == null) return;
+
+        e.setCancelled(true); // gercek yatagin yere konmasini engelle
+        plugin.getGameController().leave(p, arena);
     }
 
     @EventHandler

@@ -7,11 +7,17 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
 
 public class GameController {
+
+    // Oyuncunun envanterinin son (8.) slotuna konan, lobiye donus icin kullanilan esya.
+    public static final String LEAVE_ITEM_NAME = "Lobiye Don";
+    public static final int LEAVE_ITEM_SLOT = 8;
 
     private final RandomItemPlugin plugin;
 
@@ -44,9 +50,10 @@ public class GameController {
         Location spawn = arena.getSpawnPoints()[index];
         p.teleport(spawn);
         p.setGameMode(GameMode.ADVENTURE);
-        p.getInventory().clear();
+        clearInventoryAndArmor(p);
         p.setHealth(20.0);
         p.setFoodLevel(20);
+        giveLeaveItem(p);
 
         broadcast(arena, ChatColor.YELLOW + p.getDisplayName() + ChatColor.GRAY + " oyuna katildi. ("
                 + arena.getPlayers().size() + "/" + arena.getMaxPlayers() + ")");
@@ -59,6 +66,7 @@ public class GameController {
     public void leave(Player p, Arena arena) {
         arena.removePlayer(p);
         p.setGameMode(GameMode.SURVIVAL);
+        clearInventoryAndArmor(p);
 
         Location lobby = plugin.getSettings().getLobbyLocation();
         if (lobby != null) {
@@ -124,7 +132,7 @@ public class GameController {
             p.setGameMode(GameMode.SURVIVAL);
             p.setHealth(20.0);
             p.setFoodLevel(20);
-            p.getInventory().clear();
+            clearInventoryAndArmor(p); // yatak dahil her sey temizlenir, oyun basladiginda yatak kaybolur
         }
         broadcast(arena, ChatColor.GOLD + "Oyun basladi! Rastgele esyalar dagitilacak, son hayatta kalan kazanir!");
     }
@@ -167,7 +175,7 @@ public class GameController {
             if (p != null) {
                 p.teleport(lobby);
                 p.setGameMode(GameMode.SURVIVAL); // izleyici modundaysa da buradan cikarir
-                p.getInventory().clear();
+                clearInventoryAndArmor(p);
                 p.setFoodLevel(20);
                 p.setHealth(20.0);
             }
@@ -182,6 +190,21 @@ public class GameController {
         arena.getPlacedBlocks().clear();
 
         arena.reset();
+    }
+
+    // Envanteri VE zirhlari temizler. inventory.clear() tek basina zirh slotlarina
+    // dokunmaz, bu yuzden ayrica setArmorContents ile sifirlanmasi gerekiyor.
+    private void clearInventoryAndArmor(Player p) {
+        p.getInventory().clear();
+        p.getInventory().setArmorContents(new ItemStack[4]);
+    }
+
+    private void giveLeaveItem(Player p) {
+        ItemStack bed = new ItemStack(Material.BED, 1);
+        ItemMeta meta = bed.getItemMeta();
+        meta.setDisplayName(ChatColor.RED + LEAVE_ITEM_NAME);
+        bed.setItemMeta(meta);
+        p.getInventory().setItem(LEAVE_ITEM_SLOT, bed);
     }
 
     private void sendTitleToArena(Arena arena, String title, String subtitle) {

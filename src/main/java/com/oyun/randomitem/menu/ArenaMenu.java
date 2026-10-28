@@ -34,31 +34,50 @@ public class ArenaMenu {
     }
 
     private static ItemStack buildItem(Arena arena) {
-        boolean oynaniyor = arena.getState() == ArenaState.OYUNDA || arena.getState() == ArenaState.BASLIYOR;
+        boolean kilitli = arena.getState() == ArenaState.OYUNDA
+                || arena.getState() == ArenaState.BASLIYOR
+                || arena.getState() == ArenaState.BITTI
+                || arena.isFull()
+                || !arena.hasAllSpawns();
 
-        ItemStack item = oynaniyor
+        ItemStack item = kilitli
                 ? new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 14) // kirmizi cam
                 : new ItemStack(Material.PAPER);
 
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName((oynaniyor ? ChatColor.RED : ChatColor.GREEN) + arena.getName());
+        meta.setDisplayName(ChatColor.YELLOW + "" + ChatColor.BOLD + arena.getName());
 
         List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + "Oyuncular: " + ChatColor.YELLOW
+        lore.add("");
+        lore.add(ChatColor.WHITE + "Durum: " + durumMetni(arena));
+        lore.add("");
+        lore.add(ChatColor.WHITE + "Oyuncular: " + ChatColor.YELLOW
                 + arena.getPlayers().size() + "/" + arena.getMaxPlayers());
+        lore.add("");
 
-        if (oynaniyor) {
-            lore.add(ChatColor.RED + "Oyun oynaniyor, girilemez!");
-        } else if (arena.isFull()) {
-            lore.add(ChatColor.RED + "Harita dolu!");
-        } else if (!arena.hasAllSpawns()) {
-            lore.add(ChatColor.RED + "Harita hazir degil.");
+        if (kilitli) {
+            lore.add(ChatColor.RED + "Su an girilemiyor.");
         } else {
-            lore.add(ChatColor.GREEN + "Katilmak icin tikla!");
+            lore.add(ChatColor.GRAY + "\u2022 Oynamak icin tikla");
         }
+        lore.add(ChatColor.YELLOW + "Favorilere eklemek icin sag tikla!");
 
         meta.setLore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    private static String durumMetni(Arena arena) {
+        switch (arena.getState()) {
+            case BASLIYOR:
+                return ChatColor.YELLOW + "basliyor";
+            case OYUNDA:
+                return ChatColor.RED + "oynaniyor";
+            case BITTI:
+                return ChatColor.RED + "bitiyor";
+            case BEKLEMEDE:
+            default:
+                return ChatColor.AQUA + "beklemede";
+        }
     }
 }
