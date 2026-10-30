@@ -87,15 +87,19 @@ public class PlayerListener implements Listener {
         });
     }
 
-    // Geri sayim sirasinda (BASLIYOR durumu) oyuncularin yerinden kipirdamasini engeller,
-    // ama etrafina bakmasina (yaw/pitch) izin verir.
+    // Oyun gercekten baslayana (OYUNDA) kadar oyuncular yerinden kipirdayamaz -
+    // tek basina beklerken (BEKLEMEDE) de, geri sayim sirasinda (BASLIYOR) da.
+    // Etrafina bakmasina (yaw/pitch) her zaman izin verilir.
     @EventHandler
     public void onMove(PlayerMoveEvent e) {
         if (e.getTo() == null || e.getFrom() == null) return;
 
         Player p = e.getPlayer();
         Arena arena = findArena(p);
-        if (arena == null || arena.getState() != ArenaState.BASLIYOR) return;
+        if (arena == null) return;
+        // OYUNDA: oyun gercekten basladi, serbest. BITTI: oyun bitti, izleyiciler/kazanan
+        // lobiye isinlanmayi bekliyor, onlari da serbest birakalim (ozellikle spectator ucusu icin).
+        if (arena.getState() == ArenaState.OYUNDA || arena.getState() == ArenaState.BITTI) return;
 
         Location from = e.getFrom();
         Location to = e.getTo();
